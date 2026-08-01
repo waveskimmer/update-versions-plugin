@@ -2,6 +2,7 @@ plugins {
     `java-gradle-plugin`
     `maven-publish`
     alias(libs.plugins.kotlin.jvm)
+    idea
 }
 
 kotlin {
@@ -31,6 +32,8 @@ gradlePlugin {
 
 // Add a source set for the functional test suite
 val functionalTestSourceSet = sourceSets.create("testFunctional") {
+    description = "Runs the functional tests."
+    group = "verification"
 }
 
 configurations["testFunctionalImplementation"].extendsFrom(configurations["testImplementation"])
@@ -52,4 +55,10 @@ tasks.withType<Test>().configureEach {
 
 tasks.named<Task>("check") {
     dependsOn(testFunctional)
+}
+
+idea {
+    module {
+        testSources.from(sourceSets["testFunctional"].kotlin.srcDirs)
+    }
 }

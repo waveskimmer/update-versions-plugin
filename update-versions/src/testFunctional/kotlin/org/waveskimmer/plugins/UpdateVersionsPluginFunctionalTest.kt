@@ -3,24 +3,29 @@
  */
 package org.waveskimmer.plugins
 
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.string.shouldContain
 import java.io.File
-import kotlin.test.assertTrue
-import kotlin.test.Test
 import org.gradle.testkit.runner.GradleRunner
-import org.junit.jupiter.api.io.TempDir
+import kotlin.io.path.createTempDirectory
 
-/**
- * A simple functional test for the 'org.example.greeting' plugin.
- */
-class UpdateVersionsPluginFunctionalTest {
+class UpdateVersionsPluginFunctionalTest : FunSpec({
 
-    @field:TempDir
     lateinit var projectDir: File
+    lateinit var buildFile: File
+    lateinit var settingsFile: File
 
-    private val buildFile by lazy { projectDir.resolve("build.gradle.kts") }
-    private val settingsFile by lazy { projectDir.resolve("settings.gradle.kts") }
+    beforeTest {
+        projectDir = createTempDirectory().toFile()
+        buildFile = projectDir.resolve("build.gradle.kts")
+        settingsFile = projectDir.resolve("settings.gradle.kts")
+    }
 
-    @Test fun `can run task`() {
+    afterTest {
+        projectDir.deleteRecursively()
+    }
+
+    test("can run task") {
         // Set up the test build
         settingsFile.writeText("")
         buildFile.writeText("""
@@ -37,7 +42,6 @@ class UpdateVersionsPluginFunctionalTest {
         runner.withProjectDir(projectDir)
         val result = runner.build()
 
-        // Verify the result
-        assertTrue(result.output.contains("Hello from plugin 'org.example.greeting'"))
+        result.output shouldContain "Hello from plugin 'org.example.greeting'"
     }
-}
+})
