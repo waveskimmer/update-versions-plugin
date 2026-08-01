@@ -1,5 +1,6 @@
 plugins {
     `java-gradle-plugin`
+    `maven-publish`
     alias(libs.plugins.kotlin.jvm)
 }
 
@@ -8,12 +9,14 @@ kotlin {
 }
 
 repositories {
-    // Use Maven Central for resolving dependencies.
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
-    // Use the Kotlin Test integration.
+
+    testImplementation(libs.bundles.kotest)
+
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -21,8 +24,8 @@ dependencies {
 
 gradlePlugin {
     plugins.create("greeting") {
-        id = "org.example.greeting"
-        implementationClass = "org.example.UpdateVersionsPluginPlugin"
+        id = "org.waveskimmer.update-versions"
+        implementationClass = "org.waveskimmer.plugins.UpdateVersionsPlugin"
     }
 }
 
@@ -35,6 +38,7 @@ configurations["testFunctionalRuntimeOnly"].extendsFrom(configurations["testRunt
 
 // Add a task to run the functional tests
 val testFunctional = tasks.register<Test>("testFunctional") {
+    description = "functional tests"
     testClassesDirs = functionalTestSourceSet.output.classesDirs
     classpath = functionalTestSourceSet.runtimeClasspath
     useJUnitPlatform()
@@ -42,12 +46,10 @@ val testFunctional = tasks.register<Test>("testFunctional") {
 
 gradlePlugin.testSourceSets.add(functionalTestSourceSet)
 
-tasks.named<Task>("check") {
-    // Run the functional tests as part of `check`
-    dependsOn(testFunctional)
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
-tasks.named<Test>("test") {
-    // Use JUnit Jupiter for unit tests.
-    useJUnitPlatform()
+tasks.named<Task>("check") {
+    dependsOn(testFunctional)
 }
