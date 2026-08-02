@@ -7,22 +7,32 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.string.shouldContain
 import java.io.File
 import org.gradle.testkit.runner.GradleRunner
-import kotlin.io.path.createTempDirectory
+import kotlin.io.path.Path
+import kotlin.io.path.createDirectory
+import kotlin.io.path.div
+import kotlin.io.path.exists
 
 class UpdateVersionsPluginFunctionalTest : FunSpec({
 
     lateinit var projectDir: File
     lateinit var buildFile: File
     lateinit var settingsFile: File
+    lateinit var tomlFile: File
 
     beforeTest {
-        projectDir = createTempDirectory().toFile()
+        val projectPath = Path("/tmp/simple-gradle")
+        if (!projectPath.exists()) projectPath.createDirectory()
+        val gradleDir = projectPath / "gradle"
+        if (!gradleDir.exists()) gradleDir.createDirectory()
+
+        projectDir = projectPath.toFile()
         buildFile = projectDir.resolve("build.gradle.kts")
         settingsFile = projectDir.resolve("settings.gradle.kts")
+        tomlFile = projectDir.resolve("gradle/libs.versions.toml")
     }
 
     afterTest {
-        projectDir.deleteRecursively()
+//        projectDir.deleteRecursively()
     }
 
     test("can run task") {
@@ -32,13 +42,26 @@ class UpdateVersionsPluginFunctionalTest : FunSpec({
             plugins {
                 id("org.waveskimmer.update-versions")
             }
+            
+            dependencies { 
+               testImplementation("org.slf4j:slf4j-simple:1.7.35")
+            }
         """.trimIndent())
+        tomlFile.writeText(
+            """
+            [versions] 
+            slf4j = "1.7.35"
+            
+            [libraries]
+            slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+        """.trimIndent()
+        )
 
         // Run the build
         val runner = GradleRunner.create()
         runner.forwardOutput()
         runner.withPluginClasspath()
-        runner.withArguments("greeting")
+        runner.withArguments("checkLibsForUpdates")
         runner.withProjectDir(projectDir)
         val result = runner.build()
 

@@ -3,17 +3,25 @@
  */
 package org.waveskimmer.plugins
 
-import org.gradle.api.Project
 import org.gradle.api.Plugin
+import org.gradle.api.Project
 
 @Suppress("Unused")
 class UpdateVersionsPlugin: Plugin<Project> {
     override fun apply(project: Project) {
-        // Register a task
-        project.tasks.register("greeting") { task ->
-            task.doLast {
-                println("Hello from plugin 'org.example.greeting'")
-            }
+        val extension = project.extensions.create("updateVersions", UpdateVersionsExtension::class.java)
+
+        project.tasks.register("checkLibsForUpdates", CheckForUpdatesTask::class.java) { task ->
+            task.group = "versioning"
+            task.description =
+                "Checks configured repositories for newer library versions and updates the TOML version catalog in place."
+            task.tomlFiles.setFrom(extension.tomlFiles)
+            task.artifactRepos.set(extension.artifactRepos)
+            task.updateMajor.set(extension.updateMajor)
+            task.updateMinor.set(extension.updateMinor)
+            task.updatePatch.set(extension.updatePatch)
+            task.allowPrelease.set(extension.allowPrelease)
+            task.outputs.upToDateWhen { false }
         }
     }
 }

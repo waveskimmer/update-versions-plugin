@@ -1,7 +1,8 @@
 package org.waveskimmer.plugins
 
+import io.kotest.assertions.AssertionErrorBuilder.Companion.fail
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.shouldBe
 import org.gradle.testfixtures.ProjectBuilder
 
 /**
@@ -9,10 +10,16 @@ import org.gradle.testfixtures.ProjectBuilder
  */
 class UpdateVersionsPluginTest: FunSpec({
 
-    test("plugin registers task") {
+    test("plugin registers task with defaults") {
         val project = ProjectBuilder.builder().build()
         project.plugins.apply("org.waveskimmer.update-versions")
 
-        project.tasks.findByName("greeting") shouldNotBe null
+        val task = project.tasks.findByName("checkLibsForUpdates") ?: fail("null task found")
+        val checkTask = task as CheckForUpdatesTask
+        checkTask.artifactRepos.get() shouldBe listOf("https://repo1.maven.org/maven2")
+        checkTask.updateMajor.get() shouldBe false
+        checkTask.updateMinor.get() shouldBe true
+        checkTask.updatePatch.get() shouldBe true
+        checkTask.allowPrelease.get() shouldBe false
     }
 })
